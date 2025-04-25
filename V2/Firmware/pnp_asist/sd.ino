@@ -13,10 +13,6 @@ void getFields( const char *delim = " " )
   }
 }
 
-
-void parseCommand(String S){
-
-  S.toCharArray(fullMsg, S.length());
+void parseCommand(void){
   getFields();
-
 }

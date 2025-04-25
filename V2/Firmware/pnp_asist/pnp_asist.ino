@@ -34,29 +34,41 @@
 #include <SD.h>
 #include <SPI.h>
 
-
 #define DEBUG
 
 // input pnp File
 File pnpFile;
 
 // we read the line from file to this var
-String fileLine;
 boolean SDfound;
 
-
 // parsing vars
-char fullMsg[ 120 ];
-const uint8_t MAX_FIELD_COUNT = 6;
+char fullMsg[ 100 ];
+const uint8_t MAX_FIELD_COUNT = 7;
 char *field[ MAX_FIELD_COUNT ];
 uint8_t fieldCount;
+const uint8_t field_index_name = 0;
+const uint8_t field_index_value = 1;
+const uint8_t field_index_pack = 2;
+const uint8_t field_index_x = 3;
+const uint8_t field_index_y = 4;
 
+// old format
 // field[0] name of the component C1
 // field[1] X coordinate
 // field[2] Y coordinate
 // field[3] Angle
 // field[4] component value
 // field[5] component package
+
+// kicad pos format
+// field[0] name of the component C1
+// field[1] component value
+// field[2] component package
+// field[3] X coordinate
+// field[4] Y coordinate
+// field[5] Rotation
+// field[6] side
 
 //oled
 U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE | U8G_I2C_OPT_DEV_0);
@@ -110,11 +122,8 @@ volatile bool FindZero = false;
 //button y home switch
 const byte yHomePin = 2;
 
-
-
 // Stepper speeds in RPM
 int iDriveSpeed = 400;
-
 
 volatile long CurPos         = 0;
 volatile long TargetPos      = 0;
@@ -174,7 +183,7 @@ void git(float y){
 
 void gonder(){
       
-      CalcAngleRadius((atof(field[1])-AXIS_OFFSET),(atof(field[2])-AXIS_OFFSET)); //x,y
+      CalcAngleRadius((atof(field[field_index_x])-AXIS_OFFSET),(atof(field[field_index_y])-AXIS_OFFSET)); //x,y
       float mydon = eskiAngle - mAngle;
       don(mydon);
       float mygit = mRadius - eskiRadius;
@@ -270,12 +279,14 @@ void setup() {
     }
   }
   SDfound = 1;
-  pnpFile = SD.open("pnp.txt",FILE_READ);
+  pnpFile = SD.open("pnp.pos",FILE_READ);
 
   if (!pnpFile) {
     Serial.print("The text file cannot be opened");
     while(1);
   }
+  
+  Serial.println ("Found file, starting operation");
 
   sprintf(bufferX, "MakerStorage");
   sprintf(bufferY, "Ready!");
@@ -318,10 +329,24 @@ void loop() {
   }
   
   waitForButton();
-    
-  fileLine = pnpFile.readStringUntil('\n');
-  parseCommand(fileLine+" ");
+  
+  memset(fullMsg, 0, sizeof(fullMsg));
 
+  do {
+    pnpFile.readBytesUntil('\n', fullMsg, sizeof(fullMsg));
+    Serial.print ("read: ");
+    Serial.println (fullMsg);
+    // Remove comment character (#) part of string
+    for (int i = 0; fullMsg[i] != '\0'; i++) {
+      if (fullMsg[i] == '#') {
+        fullMsg[i] = '\0';
+        break;
+      }
+    }
+  } while(strlen(fullMsg) < 10); // if we have a small string, get the next one
+  
+  parseCommand();
+  
   #ifdef DEBUG
     Serial.println ("f0: " + String(field[0]));
     Serial.println ("f1: " + String(field[1]));
@@ -329,11 +354,12 @@ void loop() {
     Serial.println ("f3: " + String(field[3]));
     Serial.println ("f4: " + String(field[4]));
     Serial.println ("f5: " + String(field[5]));
+    Serial.println ("f6: " + String(field[6]));
   #endif
   
   // display line contents
-  sprintf(bufferX, field[0]); // component name ,
-  sprintf(bufferY, "%s/%s",field[4],field[5]); // component value,package
+  sprintf(bufferX, field[field_index_name]); // component name ,
+  sprintf(bufferY, "%s/%s",field[field_index_value],field[field_index_pack]); // component value,package
   sprintf(bufferZ, "MOVING..."); // moving
   oledPrint();
   
