@@ -53,14 +53,6 @@ const uint8_t field_index_pack = 2;
 const uint8_t field_index_x = 3;
 const uint8_t field_index_y = 4;
 
-// old format
-// field[0] name of the component C1
-// field[1] X coordinate
-// field[2] Y coordinate
-// field[3] Angle
-// field[4] component value
-// field[5] component package
-
 // kicad pos format
 // field[0] name of the component C1
 // field[1] component value
@@ -73,20 +65,16 @@ const uint8_t field_index_y = 4;
 //oled
 U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE | U8G_I2C_OPT_DEV_0);
 
-
 // display buffer
 char bufferX [20];
 char bufferY [20];
 char bufferZ [20];
 
-
 //#define SPEED 2000
 #define StepPerMM 160 
 
-
 //Result  Resolution  Teeth Step angle  Stepping  Belt
 //160.00  6.25micron  20    1.8°        1/32th    2mm
-
 
 // Stepper Motors Outputs
 #define ENABLE 5 // same out for 2 motors
@@ -98,12 +86,11 @@ char bufferZ [20];
 #define MOVING    0
 #define ARRIVED   1
 
-
 //length of y axis
 //#define MAX_Y_LENGTH 250
 
-#define CENTER_Y_OFFSET 5020
-
+// TODO: Find the zero for your PnP assist, use the laser and the center nut to center
+#define CENTER_Y_OFFSET 4400
 
 #define AXIS_OFFSET 30 // where your 0,0 away from both axis v2
 
