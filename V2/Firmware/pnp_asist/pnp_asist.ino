@@ -345,9 +345,9 @@ void loop() {
   #endif
   
   // display line contents
-  sprintf(bufferX, field[field_index_name]); // component name ,
-  sprintf(bufferY, "%s/%s",field[field_index_value],field[field_index_pack]); // component value,package
-  sprintf(bufferZ, "MOVING..."); // moving
+  snprintf(bufferX, sizeof(bufferX), "%s:%s",field[field_index_name],field[field_index_value]); // component name and value
+  snprintf(bufferY, sizeof(bufferY), "%s",field[field_index_pack]); // footprint
+  snprintf(bufferZ, sizeof(bufferZ), "MOVING..."); // moving
   oledPrint();
   
   gonder(); // move the motors
